@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2022/7/18 10:35
-# @Author  : wangjuan
-# @File    : test.py
 
 import os
 

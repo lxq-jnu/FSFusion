@@ -1,10 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2022/7/17 10:44
-# @Author  : wangjuan
-# @File    : train_autoencoder_COCO.py
-import os
 
+import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import sys
@@ -17,7 +12,7 @@ import torch
 from torch.optim import Adam
 from torch.autograd import Variable
 import utils
-from net import NestFuse_autoencoder
+from net import FSFusion_autoencoder
 from args_fusion import args
 import pytorch_msssim
 from utils_data_COCO import read_data, input_setup
@@ -45,12 +40,12 @@ def train(i):
     deepsupervision = False
     nb_filter = [64, 112, 160, 208, 256]
 
-    nest_model = NestFuse_autoencoder(nb_filter, input_nc, output_nc, deepsupervision)
+    FSF_model = FSFusion_autoencoder(nb_filter, input_nc, output_nc, deepsupervision)
 
     if args.resume is not None:
         print('Resuming, initializing using weight from {}.'.format(args.resume))
-        nest_model.load_state_dict(torch.load(args.resume))
-    print(nest_model)
+        FSF_model.load_state_dict(torch.load(args.resume))
+    print(FSF_model)
     # for n,p in nest_model.named_parameters():
     #     p.requires_grad = False
     # for n,p in nest_model.named_parameters():
@@ -62,13 +57,13 @@ def train(i):
     #             break
         # print(n)
         # print(p)
-    optimizer = Adam(nest_model.parameters(), args.lr)
+    optimizer = Adam(FSF_model.parameters(), args.lr)
     # optimizer = Adam(filter(lambda p: p.requires_grad, nest_model.parameters()), args.lr)
     mse_loss = torch.nn.MSELoss()
     ssim_loss = pytorch_msssim.msssim
 
     if args.cuda:
-        nest_model.cuda()
+        FSF_model.cuda()
 
     # tbar = trange(args.epochs)
     print('\n')
@@ -100,10 +95,10 @@ def train(i):
         print('\nEpoch %d.....' % e)
         # load training database
         if args.cuda:
-            nest_model.cuda()
+            FSF_model.cuda()
 
         batches = len(train_data) // batch_size
-        nest_model.train()
+        FSF_model.train()
         count = 0
         for batch in range(batches):
             img = train_data[batch * batch_size: (batch + 1) * batch_size]
@@ -122,16 +117,16 @@ def train(i):
                 edge_img = edge_img.cuda()
             # get fusion image
             # encoder
-            en = nest_model.encoder(img)
+            en = FSF_model.encoder(img)
             # # edge
-            edge_feature = nest_model.edge_feature(edge_img * 255.0 + img)
-            x1_0 = nest_model.edge_guidance1(edge_feature, en[0])
-            # x2_0 = nest_model.edge_guidance2(edge_feature, en[1])
-            # x3_0 = nest_model.edge_guidance3(edge_feature, en[2])
+            edge_feature = FSF_model.edge_feature(edge_img * 255.0 + img)
+            x1_0 = FSF_model.edge_guidance1(edge_feature, en[0])
+            # x2_0 = FSF_model.edge_guidance2(edge_feature, en[1])
+            # x3_0 = FSF_model.edge_guidance3(edge_feature, en[2])
             # DFM
-            DFM = nest_model.non_local(en)
+            DFM = FSF_model.non_local(en)
             # decoder
-            outputs = nest_model.decoder_train([x1_0,en[1],en[2]], DFM)
+            outputs = FSF_model.decoder_train([x1_0,en[1],en[2]], DFM)
             # resolution loss: between fusion image and visible image
             x = Variable(img.data.clone(), requires_grad=False)
             x_edge = Variable(edge_img.data.clone(), requires_grad=False)
@@ -212,15 +207,15 @@ def train(i):
 
             if (batch + 1) % (20 * args.log_interval) == 0:
                 # save model
-                nest_model.eval()
-                nest_model.cpu()
+                FSF_model.eval()
+                FSF_model.cpu()
                 save_model_filename = args.ssim_path[i] + '/' + "Epoch_" + str(e) + "_iters_" + str(count) + "_" + \
                                       str(time.ctime()).replace(' ', '_').replace(':', '_') + "_" + args.ssim_path[
                                           i] + ".model"
                 save_model_path = os.path.join(args.save_model_dir_autoencoder, save_model_filename)
                 print(os.path.join(args.save_model_dir_autoencoder, args.ssim_path[i]))
                 check_paths(os.path.join(args.save_model_dir_autoencoder, args.ssim_path[i]))
-                torch.save(nest_model.state_dict(), save_model_path)
+                torch.save(FSF_model.state_dict(), save_model_path)
                 # save loss data
                 # pixel loss
                 loss_data_pixel = Loss_pixel
@@ -253,8 +248,8 @@ def train(i):
                 check_paths(args.save_loss_dir + args.ssim_path[i])
                 scio.savemat(loss_filename_path, {'loss_all': loss_data})
 
-                nest_model.train()
-                nest_model.cuda()
+                FSF_model.train()
+                FSF_model.cuda()
                 print("\nCheckpoint, trained model saved at")
 
     # pixel loss
@@ -276,13 +271,13 @@ def train(i):
     # 	time.ctime()).replace(' ', '_').replace(':', '_') + "_" + args.ssim_path[i] + ".mat"
     # scio.savemat(loss_filename_path, {'final_loss_all': loss_data})
     # save model
-    nest_model.eval()
-    nest_model.cpu()
+    FSF_model.eval()
+    FSF_model.cpu()
     save_model_filename = args.ssim_path[i] + '/' "Final_epoch_" + str(args.epochs) + "_" + \
                           str(time.ctime()).replace(' ', '_').replace(':', '_') + "_" + args.ssim_path[i] + ".model"
     save_model_path = os.path.join(args.save_model_dir_autoencoder, save_model_filename)
     check_paths(os.path.join(args.save_model_dir_autoencoder, args.ssim_path[i]))
-    torch.save(nest_model.state_dict(), save_model_path)
+    torch.save(FSF_model.state_dict(), save_model_path)
 
     print("\nDone, trained model saved at")
 

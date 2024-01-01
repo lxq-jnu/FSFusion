@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2022/7/16 10:44
-# @Author  : wangjuan
-# @File    : net.py
 
 
 import numpy as np

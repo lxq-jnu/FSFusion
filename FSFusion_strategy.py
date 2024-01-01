@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2022/12/10 15:24
-# @Author  : Wangjuan
-# @Site    : 
-# @File    : FSFusion_strategy.py
 
 EPSILON = 1e-5
 import torch

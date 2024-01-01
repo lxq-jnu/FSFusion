@@ -1,8 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2022/7/18 10:42
-# @Author  : wangjuan
-# @File    : arg_fusion.py
+
 class args():
 	# training args
 	epochs = 2  #"number of training epochs, default is 2"
