@@ -22,8 +22,9 @@ This is official Pytorch implementation of "[A Full-Scale Hierarchical Encoder-D
 
 ## To test
 
-1. The pre-trained checkpoint is put in **./models/Final.model**.
-1. The test datasets are put in **./images/**.
-1. The result data_root are put in **./outputs/dataset_name**.
+1. Downloading the pre-trained checkpoint from [hed_pretrained_bsds.caffemodel](https://pan.baidu.com/s/18CvOFoG3qLJtnzn33oZtng?pwd=a9hu) and putting it in `./HED`.
+1. The pre-trained checkpoint is put in `./models/Final.model`.
+1. The test datasets are put in `./images/`.
+1. The result data_root are put in `./outputs/dataset_name`.
 
 Then running `test.py`
